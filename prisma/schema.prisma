@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  passwordHash      String
+  createdAt         DateTime   @default(now())
+  plan              Plan       @default(free)
+  stripeCustomerId  String?
+  nextBillingDate   DateTime?
+  professionalTitle String?
+  decisions         Decision[]
+  patterns          Pattern[]
+}
+
+enum Plan {
+  free
+  paid
+}
+
+model Decision {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decisionText     String
+  thesis           String
+  conviction       Int
+  timeHorizon      TimeHorizon
+  whatProvesWrong  String
+  biggestAssumption String
+  hasPrecedent     Boolean
+  precedentOutcome String?
+  emotionalState   EmotionalState
+  createdAt        DateTime         @default(now())
+  dueReflectionDate DateTime
+  reflectionStatus ReflectionStatus @default(pending)
+  reflection       Reflection?
+}
+
+enum TimeHorizon {
+  one_month
+  three_months
+  six_months
+  one_year
+  two_plus_years
+}
+
+enum EmotionalState {
+  confident
+  cautious
+  frustrated
+  excited
+  pressured
+  other
+}
+
+enum ReflectionStatus {
+  pending
+  done
+  skipped
+}
+
+model Reflection {
+  id                   String           @id @default(cuid())
+  decisionId           String           @unique
+  decision             Decision         @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  whatHappened         String
+  reasoningSound       ReasoningQuality
+  reasoningExplanation String?
+  whatLearned          String?
+  reflectedAt          DateTime         @default(now())
+  daysEarly            Int?
+  outcomeWin           Boolean?
+}
+
+enum ReasoningQuality {
+  yes
+  partial
+  no
+}
+
+model Pattern {
+  id                        String   @id @default(cuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthYear                 String
+  conviction8PlusAccuracy   Float?
+  conviction6to7Accuracy    Float?
+  precedentUsageRate        Float?
+  precedentVsFreshOutcomes  Json?
+  timeHorizonAccuracy       Float?
+  emotionalBiasBreakdown    Json?
+  reasoningQualityVsOutcome Json?
+  generatedAt               DateTime @default(now())
+}
