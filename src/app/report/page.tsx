@@ -8,6 +8,7 @@ import { convictionLabel, timeHorizonLabel } from '@/lib/decisions'
 interface Decision {
   id: string; decisionText: string; conviction: number; timeHorizon: string;
   emotionalState: string; hasPrecedent: boolean; createdAt: string;
+  addingToLosingPosition?: boolean | null;
   reflection?: {
     reasoningSound: string; outcomeWin?: boolean; whatHappened: string
   }
@@ -65,6 +66,16 @@ export default function ReportPage() {
     : null
   const freshWinRate = freshDecisions.length > 0
     ? Math.round(freshDecisions.filter(d => d.reflection?.outcomeWin).length / freshDecisions.length * 100)
+    : null
+
+  // Sunk cost analysis — inferred from behavior, never self-reported
+  const addingToLoser = reflected.filter(d => d.addingToLosingPosition === true)
+  const freshEntry = reflected.filter(d => d.addingToLosingPosition === false)
+  const addingToLoserWinRate = addingToLoser.length > 0
+    ? Math.round(addingToLoser.filter(d => d.reflection?.outcomeWin).length / addingToLoser.length * 100)
+    : null
+  const freshEntryWinRate = freshEntry.length > 0
+    ? Math.round(freshEntry.filter(d => d.reflection?.outcomeWin).length / freshEntry.length * 100)
     : null
 
   // Emotional state analysis
@@ -156,8 +167,37 @@ export default function ReportPage() {
           </InsightBox>
         </ReportSection>
 
+        {/* Sunk cost patterns */}
+        <ReportSection title="03 — Sunk Cost Pattern" subtitle="Do you throw good money after bad?">
+          {addingToLoser.length < 2 || freshEntry.length < 2 ? (
+            <p className="text-sm opacity-40">Log more decisions — both adds to existing losers and fresh entries — to see this pattern.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <StatBox
+                  label="Adding to a loser"
+                  value={`${addingToLoserWinRate ?? '—'}%`}
+                  sub={`${addingToLoser.length} decisions`}
+                  highlight={addingToLoserWinRate !== null && freshEntryWinRate !== null && addingToLoserWinRate < freshEntryWinRate}
+                />
+                <StatBox
+                  label="Fresh entry"
+                  value={`${freshEntryWinRate ?? '—'}%`}
+                  sub={`${freshEntry.length} decisions`}
+                  highlight={freshEntryWinRate !== null && addingToLoserWinRate !== null && freshEntryWinRate > addingToLoserWinRate}
+                />
+              </div>
+              <InsightBox>
+                {addingToLoserWinRate !== null && freshEntryWinRate !== null && addingToLoserWinRate < freshEntryWinRate
+                  ? `Adding to an existing loser wins ${addingToLoserWinRate}% of the time against ${freshEntryWinRate}% for a fresh entry. That gap is what sunk cost costs you — the position doesn't know what you already paid for it.`
+                  : 'No meaningful gap yet between adding to a loser and a fresh entry. Keep logging to see if the pattern holds.'}
+              </InsightBox>
+            </>
+          )}
+        </ReportSection>
+
         {/* Time horizon */}
-        <ReportSection title="03 — Time Horizon" subtitle="When do you judge?">
+        <ReportSection title="04 — Time Horizon" subtitle="When do you judge?">
           <div className="space-y-2">
             {['one_month', 'three_months', 'six_months', 'one_year', 'two_plus_years'].map(th => {
               const count = decisions.filter(d => d.timeHorizon === th).length
@@ -182,7 +222,7 @@ export default function ReportPage() {
         </ReportSection>
 
         {/* Emotional bias */}
-        <ReportSection title="04 — Emotional Bias" subtitle="Which emotions help your judgment?">
+        <ReportSection title="05 — Emotional Bias" subtitle="Which emotions help your judgment?">
           {Object.keys(emotionGroups).length < 2 ? (
             <p className="text-sm opacity-40">Log decisions with varied emotional states to see your bias pattern.</p>
           ) : (
@@ -215,7 +255,7 @@ export default function ReportPage() {
         </ReportSection>
 
         {/* Skill vs luck */}
-        <ReportSection title="05 — Skill vs. Luck" subtitle="Separate them. That's judgment.">
+        <ReportSection title="06 — Skill vs. Luck" subtitle="Separate them. That's judgment.">
           <div className="grid grid-cols-3 gap-3 mb-4">
             <StatBox label="Reasoned well" value={String(skillDecisions.length)} sub="decisions" />
             <StatBox label="Some blind spots" value={String(partialDecisions.length)} sub="decisions" />
@@ -248,11 +288,16 @@ export default function ReportPage() {
                 : 'Start noting when you rely on precedent. Precedent reliance is a pattern worth tracking.'}
             </TrainingPoint>
             <TrainingPoint n="3">
+              {addingToLoser.length >= 2 && addingToLoserWinRate !== null && freshEntryWinRate !== null && addingToLoserWinRate < freshEntryWinRate
+                ? `Adding to losers underperforms fresh entries by ${freshEntryWinRate - addingToLoserWinRate} points. Before your next add, ask: would you open this position fresh, at this price, today?`
+                : 'Keep flagging when a decision adds to an existing loser. This is the sunk-cost check — the market corrects it for you eventually.'}
+            </TrainingPoint>
+            <TrainingPoint n="4">
               {bestEmotion
                 ? `Log one decision made while ${bestEmotion[0]} and one made while ${worstEmotion?.[0] ?? 'pressured'}. See if the pattern holds.`
                 : 'Pay attention to your emotional state when you log. Emotional context is where judgment hides.'}
             </TrainingPoint>
-            <TrainingPoint n="4">
+            <TrainingPoint n="5">
               On your next decision, extend the time horizon by one step. You judge early — train patience.
             </TrainingPoint>
           </ul>

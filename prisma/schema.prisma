@@ -37,6 +37,8 @@ model Decision {
   biggestAssumption String
   hasPrecedent     Boolean
   precedentOutcome String?
+  addingToLosingPosition  Boolean?
+  existingPositionLossPct Float?
   emotionalState   EmotionalState
   createdAt        DateTime         @default(now())
   dueReflectionDate DateTime

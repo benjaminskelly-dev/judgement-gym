@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-const TOTAL = 8
+const TOTAL = 9
 
 interface FormData {
   decisionText: string
@@ -15,6 +15,8 @@ interface FormData {
   biggestAssumption: string
   hasPrecedent: boolean | null
   precedentOutcome: string
+  addingToLosingPosition: boolean | null
+  existingPositionLossPct: string
   emotionalState: string
 }
 
@@ -27,6 +29,8 @@ const EMPTY: FormData = {
   biggestAssumption: '',
   hasPrecedent: null,
   precedentOutcome: '',
+  addingToLosingPosition: null,
+  existingPositionLossPct: '',
   emotionalState: '',
 }
 
@@ -57,7 +61,8 @@ export default function LogPage() {
       case 5: return form.whatProvesWrong.trim().length > 0
       case 6: return form.biggestAssumption.trim().length > 0
       case 7: return form.hasPrecedent !== null
-      case 8: return form.emotionalState !== ''
+      case 8: return form.addingToLosingPosition !== null
+      case 9: return form.emotionalState !== ''
       default: return true
     }
   }
@@ -73,6 +78,8 @@ export default function LogPage() {
           ...form,
           hasPrecedent: Boolean(form.hasPrecedent),
           precedentOutcome: form.hasPrecedent ? form.precedentOutcome : null,
+          addingToLosingPosition: Boolean(form.addingToLosingPosition),
+          existingPositionLossPct: form.addingToLosingPosition ? form.existingPositionLossPct : '',
         }),
       })
       const data = await res.json()
@@ -108,7 +115,7 @@ export default function LogPage() {
         <div className="w-full max-w-lg">
           {step === 1 && (
             <Screen
-              label="Screen 1 of 8"
+              label="Screen 1 of 9"
               title="WHAT'S THE DECISION?"
               guidance="Being specific is step one of judgment training."
             >
@@ -127,7 +134,7 @@ export default function LogPage() {
 
           {step === 2 && (
             <Screen
-              label="Screen 2 of 8"
+              label="Screen 2 of 9"
               title="YOUR THESIS"
               subtitle="Why are you making this choice?"
               guidance="Articulating your reasoning is judgment training. If you can't explain it, you don't understand it."
@@ -147,7 +154,7 @@ export default function LogPage() {
 
           {step === 3 && (
             <Screen
-              label="Screen 3 of 8"
+              label="Screen 3 of 9"
               title="HOW CERTAIN ARE YOU?"
               guidance="Conviction is where judgment training begins. High confidence often masks blind spots."
             >
@@ -180,7 +187,7 @@ export default function LogPage() {
 
           {step === 4 && (
             <Screen
-              label="Screen 4 of 8"
+              label="Screen 4 of 9"
               title="WHEN WILL YOU KNOW IF YOU'RE RIGHT?"
               guidance="This is where judgment meets patience."
             >
@@ -211,7 +218,7 @@ export default function LogPage() {
 
           {step === 5 && (
             <Screen
-              label="Screen 5 of 8"
+              label="Screen 5 of 9"
               title="WHAT WOULD PROVE YOU WRONG?"
               guidance={`Be specific. Not "it doesn't work," but "X outcome."`}
             >
@@ -230,7 +237,7 @@ export default function LogPage() {
 
           {step === 6 && (
             <Screen
-              label="Screen 6 of 8"
+              label="Screen 6 of 9"
               title="WHAT'S YOUR BIGGEST ASSUMPTION?"
               guidance="Judgment is knowing what you don't know."
             >
@@ -249,7 +256,7 @@ export default function LogPage() {
 
           {step === 7 && (
             <Screen
-              label="Screen 7 of 8"
+              label="Screen 7 of 9"
               title="ARE YOU RELYING ON A PAST DECISION?"
               guidance="Precedent reliance is a judgment pattern worth understanding."
             >
@@ -289,7 +296,49 @@ export default function LogPage() {
 
           {step === 8 && (
             <Screen
-              label="Screen 8 of 8"
+              label="Screen 8 of 9"
+              title="ARE YOU ADDING TO A LOSING POSITION?"
+              guidance="This is a fact, not a confession. It's the pattern worth tracking, not a bias to admit to."
+            >
+              <div className="flex gap-4 mb-6">
+                {[true, false].map(val => (
+                  <button
+                    key={String(val)}
+                    onClick={() => update('addingToLosingPosition', val)}
+                    className="flex-1 py-4 rounded-xl border font-bold transition-all"
+                    style={{
+                      borderColor: form.addingToLosingPosition === val ? 'var(--accent)' : 'var(--border)',
+                      background: form.addingToLosingPosition === val ? 'rgba(232,255,32,0.08)' : 'var(--card)',
+                      color: form.addingToLosingPosition === val ? 'var(--accent)' : 'var(--foreground)',
+                    }}
+                  >
+                    {val ? 'Yes' : 'No'}
+                  </button>
+                ))}
+              </div>
+              {form.addingToLosingPosition && (
+                <div>
+                  <label className="block text-xs uppercase tracking-widest opacity-50 mb-2">
+                    How far underwater is the existing position? (optional)
+                  </label>
+                  <input
+                    autoFocus
+                    type="number"
+                    step="0.1"
+                    value={form.existingPositionLossPct}
+                    onChange={e => update('existingPositionLossPct', e.target.value)}
+                    placeholder="e.g. 12.5"
+                    className="w-full px-4 py-3 rounded-xl border text-base outline-none focus:border-[var(--accent)] transition-colors"
+                    style={{ borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--foreground)' }}
+                  />
+                </div>
+              )}
+            </Screen>
+          )}
+
+          {step === 9 && (
+            <Screen
+              label="Screen 9 of 9"
               title="WHAT'S YOUR EMOTIONAL STATE?"
               guidance="Understanding the human condition starts with understanding yourself."
             >

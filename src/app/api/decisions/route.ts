@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
   const {
     decisionText, thesis, conviction, timeHorizon, whatProvesWrong,
     biggestAssumption, hasPrecedent, precedentOutcome, emotionalState,
+    addingToLosingPosition, existingPositionLossPct,
   } = body
 
   const decision = await prisma.decision.create({
@@ -48,6 +49,10 @@ export async function POST(req: NextRequest) {
       biggestAssumption,
       hasPrecedent: Boolean(hasPrecedent),
       precedentOutcome: hasPrecedent ? precedentOutcome : null,
+      addingToLosingPosition: typeof addingToLosingPosition === 'boolean' ? addingToLosingPosition : null,
+      existingPositionLossPct: addingToLosingPosition && existingPositionLossPct !== ''
+        ? Number(existingPositionLossPct)
+        : null,
       emotionalState: emotionalState as EmotionalState,
       dueReflectionDate: dueReflectionDate(timeHorizon as TimeHorizon),
     },
